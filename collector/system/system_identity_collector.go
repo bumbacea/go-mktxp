@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bumbacea/go-mktxp/collector"
@@ -16,9 +17,9 @@ type IdentityCollector struct {
 	gauge *prometheus.GaugeVec
 }
 
-func (c *IdentityCollector) Collect(router *collector.RouterEntry) error {
+func (c *IdentityCollector) Collect(ctx context.Context, router *collector.RouterEntry) error {
 	// Run the RouterOS command to get the system identity
-	reply, err := router.Conn.Run("/system/identity/print")
+	reply, err := router.Conn.RunContext(ctx, "/system/identity/print")
 	if err != nil {
 		return fmt.Errorf("failed to run /system/identity/print command: %w", err)
 	}

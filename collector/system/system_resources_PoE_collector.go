@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -21,15 +22,15 @@ type POECollector struct {
 }
 
 // Collect retrieves PoE metrics from the router and sets Prometheus metrics.
-func (p *POECollector) Collect(router *collector.RouterEntry) error {
+func (p *POECollector) Collect(ctx context.Context, router *collector.RouterEntry) error {
 	// Run the "/interface/ethernet/print" command to fetch PoE details
-	rply, err := router.Conn.Run("/interface/ethernet/poe/print", "proplist=name")
+	rply, err := router.Conn.RunContext(ctx, "/interface/ethernet/poe/print", "proplist=name")
 	if err != nil {
 		return fmt.Errorf("failed to run /interface/ethernet/poe/print command: %w", err)
 	}
 
 	for idx := range rply.Re {
-		monitorReply, err := router.Conn.Run("/interface/ethernet/poe/monitor", "=once=", fmt.Sprintf("=numbers=%d", idx))
+		monitorReply, err := router.Conn.RunContext(ctx, "/interface/ethernet/poe/monitor", "=once=", fmt.Sprintf("=numbers=%d", idx))
 		if err != nil {
 			return fmt.Errorf("failed to run /interface/ethernet/poe/monitor command: %w", err)
 		}

@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bumbacea/go-mktxp/collector"
@@ -16,8 +17,8 @@ type PackagesCollector struct {
 	gauge *prometheus.GaugeVec
 }
 
-func (p *PackagesCollector) Collect(router *collector.RouterEntry) error {
-	rply, err := router.Conn.Run("/system/package/print", "proplist=name,version,build-time,disabled")
+func (p *PackagesCollector) Collect(ctx context.Context, router *collector.RouterEntry) error {
+	rply, err := router.Conn.RunContext(ctx, "/system/package/print", "proplist=name,version,build-time,disabled")
 	if err != nil {
 		return fmt.Errorf("failed to run command: %w", err)
 	}

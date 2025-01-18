@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bumbacea/go-mktxp/collector"
@@ -16,8 +17,8 @@ type ActiveUsersCollector struct {
 	gauge *prometheus.GaugeVec
 }
 
-func (a *ActiveUsersCollector) Collect(router *collector.RouterEntry) error {
-	rply, err := router.Conn.Run("/user/active/print", "proplist=name,when,address,via,group")
+func (a *ActiveUsersCollector) Collect(ctx context.Context, router *collector.RouterEntry) error {
+	rply, err := router.Conn.RunContext(ctx, "/user/active/print", "proplist=name,when,address,via,group")
 	if err != nil {
 		return fmt.Errorf("failed to run command: %w", err)
 	}

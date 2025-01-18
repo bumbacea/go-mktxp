@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -25,9 +26,9 @@ type ResourcesCollector struct {
 }
 
 // Collect retrieves system resource information and sets Prometheus metrics.
-func (r *ResourcesCollector) Collect(router *collector.RouterEntry) error {
+func (r *ResourcesCollector) Collect(ctx context.Context, router *collector.RouterEntry) error {
 	// Run the "/system/resource/print" command to fetch system details
-	rply, err := router.Conn.Run("/system/resource/print", "proplist=uptime,free-memory,total-memory,free-hdd-space,total-hdd-space,cpu-load,cpu-count,cpu-frequency,architecture-name,board-name,cpu,version")
+	rply, err := router.Conn.RunContext(ctx, "/system/resource/print", "proplist=uptime,free-memory,total-memory,free-hdd-space,total-hdd-space,cpu-load,cpu-count,cpu-frequency,architecture-name,board-name,cpu,version")
 	if err != nil {
 		return fmt.Errorf("failed to run /system/resource/print command: %w", err)
 	}
