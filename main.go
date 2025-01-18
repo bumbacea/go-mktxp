@@ -99,6 +99,9 @@ func initializeRegistry() *prometheus.Registry {
 }
 
 func startHTTPServer(port string, registry *prometheus.Registry) {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf("called %s", r.URL.Path)))
+	})
 	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	fmt.Printf("Starting server on %s\n", port)
 	if err := http.ListenAndServe(port, nil); err != nil {
