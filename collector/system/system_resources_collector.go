@@ -36,10 +36,12 @@ func (r *ResourcesCollector) Collect(ctx context.Context, router *collector.Rout
 	for _, sentence := range rply.Re {
 		// Extract relevant fields
 		labels := prometheus.Labels{
-			"architecture_name": sentence.Map["architecture-name"],
-			"board_name":        sentence.Map["board-name"],
-			"cpu":               sentence.Map["cpu"],
-			"version":           sentence.Map["version"],
+			"architecture_name":   sentence.Map["architecture-name"],
+			"board_name":          sentence.Map["board-name"],
+			"cpu":                 sentence.Map["cpu"],
+			"version":             sentence.Map["version"],
+			"routerboard_address": router.ConfigEntry.Hostname,
+			"routerboard_name":    router.ConfigEntry.Name,
 		}
 
 		// Helper function to set metric values
@@ -75,78 +77,70 @@ func (r *ResourcesCollector) IsEnabled(entry config.RouterConfig) bool {
 }
 
 // Declare initializes the Prometheus gauges and registers them with Prometheus.
-func (r *ResourcesCollector) Declare(registry prometheus.Registerer, address string, routerName string) error {
-	commonLabels := []string{"architecture_name", "board_name", "cpu", "version"}
+func (r *ResourcesCollector) Declare(registry prometheus.Registerer) error {
+	commonLabels := []string{"architecture_name", "board_name", "cpu", "version", "routerboard_address", "routerboard_name"}
 
 	r.freeMemory = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_free_memory",
-			Help:        "Free memory available on the router (in bytes).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_free_memory",
+			Help:      "Free memory available on the router (in bytes).",
 		},
 		commonLabels,
 	)
 	r.totalMemory = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_total_memory",
-			Help:        "Total memory on the router (in bytes).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_total_memory",
+			Help:      "Total memory on the router (in bytes).",
 		},
 		commonLabels,
 	)
 	r.freeHddSpace = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_free_hdd_space",
-			Help:        "Free HDD space available on the router (in bytes).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_free_hdd_space",
+			Help:      "Free HDD space available on the router (in bytes).",
 		},
 		commonLabels,
 	)
 	r.totalHddSpace = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_total_hdd_space",
-			Help:        "Total HDD space on the router (in bytes).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_total_hdd_space",
+			Help:      "Total HDD space on the router (in bytes).",
 		},
 		commonLabels,
 	)
 	r.uptime = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_uptime",
-			Help:        "System uptime in seconds.",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_uptime",
+			Help:      "System uptime in seconds.",
 		},
 		commonLabels,
 	)
 	r.cpuLoad = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_cpu_load",
-			Help:        "CPU load on the router (percentage).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_cpu_load",
+			Help:      "CPU load on the router (percentage).",
 		},
 		commonLabels,
 	)
 	r.cpuCount = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_cpu_count",
-			Help:        "Number of available CPU cores.",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_cpu_count",
+			Help:      "Number of available CPU cores.",
 		},
 		commonLabels,
 	)
 	r.cpuFrequency = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "system_cpu_frequency",
-			Help:        "CPU frequency in MHz.",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "system_cpu_frequency",
+			Help:      "CPU frequency in MHz.",
 		},
 		commonLabels,
 	)

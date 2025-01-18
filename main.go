@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -61,6 +62,10 @@ func main() {
 				delete(instances, defaultKey)
 			}
 
+			if err := collector.DeclareAll(registry); err != nil {
+				return fmt.Errorf("failed to declare collector: %w", err)
+			}
+
 			// Start collectors
 			for instanceName, instanceConfig := range instances {
 				mergedConfig := instanceConfig
@@ -75,7 +80,7 @@ func main() {
 				mergedConfig.Name = instanceName
 				log.Printf("Starting collector for router: %s", instanceName)
 
-				if err := startCollector(registry, mergedConfig, ctx, wg); err != nil {
+				if err := startCollector(mergedConfig, ctx, wg); err != nil {
 					return fmt.Errorf("failed to start collector for router %s: %w", instanceName, err)
 				}
 			}
@@ -103,25 +108,21 @@ func main() {
 	}
 }
 
-func startCollector(registry prometheus.Registerer, conf config.RouterConfig, ctx context.Context, wg *sync.WaitGroup) error {
-	wg.Add(1)
+func startCollector(conf config.RouterConfig, ctx context.Context, wg *sync.WaitGroup) error {
+
 	router, err := collector.NewRouterEntry(conf)
 	if err != nil {
 		return fmt.Errorf("failed to create router entry: %w", err)
 	}
 
-	if err := router.Declare(registry); err != nil {
-		return fmt.Errorf("failed to declare collector: %w", err)
-	}
-
 	if err := router.Collect(nil); err != nil {
 		return fmt.Errorf("failed to collect initial metrics: %w", err)
 	}
-
+	wg.Add(1)
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
 		defer wg.Done()
+		defer ticker.Stop()
 
 		for {
 			select {
@@ -129,6 +130,7 @@ func startCollector(registry prometheus.Registerer, conf config.RouterConfig, ct
 				if err := router.Collect(ctx); err != nil {
 					log.Printf("failed to collect metrics: %v", err)
 				}
+				log.Printf("Collected metrics for router: %s", conf.Name)
 			case <-ctx.Done():
 				router.Conn.Close()
 				log.Printf("Stopping collector for router: %s", conf.Name)
@@ -156,7 +158,7 @@ func startHTTPServer(port string, registry *prometheus.Registry, ctx context.Con
 	// Run server in a goroutine to allow graceful shutdown
 	go func() {
 		log.Printf("Starting HTTP server on %s", port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("HTTP server error: %v", err)
 		}
 	}()

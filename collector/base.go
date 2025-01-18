@@ -20,7 +20,7 @@ func RegisterAvailableCollector(collector Collector) {
 type Collector interface {
 	Collect(ctx context.Context, router *RouterEntry) error
 	IsEnabled(entry config.RouterConfig) bool
-	Declare(registry prometheus.Registerer, address string, routerName string) error
+	Declare(registry prometheus.Registerer) error
 }
 
 // RouterEntry holds configuration entry details.
@@ -55,18 +55,6 @@ func NewRouterEntry(cfg config.RouterConfig) (*RouterEntry, error) {
 	}, nil
 }
 
-func (e *RouterEntry) Declare(registry prometheus.Registerer) error {
-	for _, collector := range e.Collectors {
-		if !collector.IsEnabled(e.ConfigEntry) {
-			continue
-		}
-		err := collector.Declare(registry, e.ConfigEntry.Hostname, e.ConfigEntry.Name)
-		if err != nil {
-			return fmt.Errorf("failed to declare collector: %w", err)
-		}
-	}
-	return nil
-}
 func (e *RouterEntry) Collect(ctx context.Context) error {
 	for _, collector := range e.Collectors {
 		if !collector.IsEnabled(e.ConfigEntry) {
@@ -75,6 +63,16 @@ func (e *RouterEntry) Collect(ctx context.Context) error {
 		err := collector.Collect(ctx, e)
 		if err != nil {
 			return fmt.Errorf("failed to collect metrics for %s of type %T: %w", e.ConfigEntry.Hostname, collector, err)
+		}
+	}
+	return nil
+}
+
+func DeclareAll(registry *prometheus.Registry) error {
+	for _, connector := range availableConnectors {
+		err := connector.Declare(registry)
+		if err != nil {
+			return fmt.Errorf("failed to declare collector %T: %w", connector, err)
 		}
 	}
 	return nil

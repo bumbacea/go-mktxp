@@ -30,7 +30,7 @@ func (a *ActiveUsersCollector) Collect(ctx context.Context, router *collector.Ro
 		via := sentence.Map["via"]
 		group := sentence.Map["group"]
 
-		a.gauge.WithLabelValues(name, when, address, via, group).Set(1)
+		a.gauge.WithLabelValues(name, when, address, via, group, router.ConfigEntry.Hostname, router.ConfigEntry.Name).Set(1)
 	}
 	return nil
 }
@@ -45,18 +45,14 @@ func (a *ActiveUsersCollector) IsEnabled(entry config.RouterConfig) bool {
 	return false
 }
 
-func (a *ActiveUsersCollector) Declare(registry prometheus.Registerer, address string, routerName string) error {
+func (a *ActiveUsersCollector) Declare(registry prometheus.Registerer) error {
 	a.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "mktxp",
 			Name:      "active_users_info",
 			Help:      "Information about active users on the router",
-			ConstLabels: map[string]string{
-				"routerboard_address": address,
-				"routerboard_name":    routerName,
-			},
 		},
-		[]string{"name", "when", "address", "via", "group"},
+		[]string{"name", "when", "address", "via", "group", "routerboard_address", "routerboard_name"},
 	)
 
 	if err := registry.Register(a.gauge); err != nil {

@@ -44,10 +44,12 @@ func (p *POECollector) Collect(ctx context.Context, router *collector.RouterEntr
 
 			// Use these labels for all metrics
 			labels := prometheus.Labels{
-				"name":           name,
-				"poe_out":        poeOut,
-				"poe_priority":   poePriority,
-				"poe_out_status": poeOutStatus,
+				"name":                name,
+				"poe_out":             poeOut,
+				"poe_priority":        poePriority,
+				"poe_out_status":      poeOutStatus,
+				"routerboard_address": router.ConfigEntry.Hostname,
+				"routerboard_name":    router.ConfigEntry.Name,
 			}
 
 			// Function to safely convert values and set metrics
@@ -82,42 +84,38 @@ func (p *POECollector) IsEnabled(entry config.RouterConfig) bool {
 }
 
 // Declare initializes the Prometheus gauges and registers them.
-func (p *POECollector) Declare(registry prometheus.Registerer, address string, routerName string) error {
-	commonLabels := []string{"name", "poe_out", "poe_priority", "poe_out_status"}
+func (p *POECollector) Declare(registry prometheus.Registerer) error {
+	commonLabels := []string{"name", "poe_out", "poe_priority", "poe_out_status", "routerboard_address", "routerboard_name"}
 
 	p.poeVoltage = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "poe_out_voltage",
-			Help:        "Output voltage of PoE interfaces (in Volts).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "poe_out_voltage",
+			Help:      "Output voltage of PoE interfaces (in Volts).",
 		},
 		commonLabels,
 	)
 	p.poeCurrent = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "poe_out_current",
-			Help:        "Output current of PoE interfaces (in Amperes).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "poe_out_current",
+			Help:      "Output current of PoE interfaces (in Amperes).",
 		},
 		commonLabels,
 	)
 	p.poePower = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "poe_out_power",
-			Help:        "Output power of PoE interfaces (in Watts).",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "poe_out_power",
+			Help:      "Output power of PoE interfaces (in Watts).",
 		},
 		commonLabels,
 	)
 	p.poeInfo = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "mktxp",
-			Name:        "poe_info",
-			Help:        "Information about PoE interfaces.",
-			ConstLabels: prometheus.Labels{"routerboard_address": address, "routerboard_name": routerName},
+			Namespace: "mktxp",
+			Name:      "poe_info",
+			Help:      "Information about PoE interfaces.",
 		},
 		commonLabels,
 	)

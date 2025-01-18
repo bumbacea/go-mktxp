@@ -31,7 +31,7 @@ func (c *IdentityCollector) Collect(ctx context.Context, router *collector.Route
 			return fmt.Errorf("missing 'name' field in /system/identity/print response")
 		}
 		// Set the prometheus gauge with the name label
-		c.gauge.WithLabelValues(identityName).Set(1)
+		c.gauge.WithLabelValues(identityName, router.ConfigEntry.Hostname, router.ConfigEntry.Name).Set(1)
 	}
 
 	return nil
@@ -42,19 +42,15 @@ func (c *IdentityCollector) IsEnabled(_ config.RouterConfig) bool {
 	return true
 }
 
-func (c *IdentityCollector) Declare(registry prometheus.Registerer, address string, routerName string) error {
+func (c *IdentityCollector) Declare(registry prometheus.Registerer) error {
 	// Define the Prometheus gauge metric
 	c.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "mktxp",
 			Name:      "system_identity_info",
 			Help:      "Information about the system identity of the router",
-			ConstLabels: map[string]string{
-				"routerboard_address": address,
-				"routerboard_name":    routerName,
-			},
 		},
-		[]string{"name"},
+		[]string{"name", "routerboard_address", "routerboard_name"},
 	)
 
 	// Register the gauge metric

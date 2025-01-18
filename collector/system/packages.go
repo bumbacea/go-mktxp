@@ -23,7 +23,7 @@ func (p *PackagesCollector) Collect(ctx context.Context, router *collector.Route
 		return fmt.Errorf("failed to run command: %w", err)
 	}
 	for _, sentence := range rply.Re {
-		p.gauge.WithLabelValues(sentence.Map["name"], sentence.Map["version"], sentence.Map["build-time"], sentence.Map["disabled"]).Set(1)
+		p.gauge.WithLabelValues(sentence.Map["name"], sentence.Map["version"], sentence.Map["build-time"], sentence.Map["disabled"], router.ConfigEntry.Hostname, router.ConfigEntry.Name).Set(1)
 	}
 	return nil
 }
@@ -38,18 +38,14 @@ func (p *PackagesCollector) IsEnabled(entry config.RouterConfig) bool {
 	return false
 }
 
-func (p *PackagesCollector) Declare(registry prometheus.Registerer, address string, routerName string) error {
+func (p *PackagesCollector) Declare(registry prometheus.Registerer) error {
 	p.gauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Namespace: "mktxp",
 			Name:      "installed_packages_info",
 			Help:      "Information about installed packages on the router",
-			ConstLabels: map[string]string{
-				"routerboard_address": address,
-				"routerboard_name":    routerName,
-			},
 		},
-		[]string{"name", "version", "build_time", "disabled"},
+		[]string{"name", "version", "build_time", "disabled", "routerboard_address", "routerboard_name"},
 	)
 
 	if err := registry.Register(p.gauge); err != nil {
